@@ -1,0 +1,4 @@
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - heading "Homeboard unavailable" [level=1] [ref=e5]
+    - paragraph [ref=e6]: Invalid bearer token.
