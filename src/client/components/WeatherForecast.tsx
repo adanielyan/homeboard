@@ -16,31 +16,40 @@ export function WeatherForecast({ weather, error }: WeatherForecastProps) {
       title="7-day forecast"
       icon={<CalendarRange aria-hidden="true" strokeWidth={1.8} />}
     >
-      <div className="forecast-table">
-        {error ? <div className="state-message">{error}</div> : null}
+      <div className="grid min-h-0 content-start gap-[0.6rem] [grid-template-columns:repeat(7,minmax(0,1fr))] max-[1280px]:grid-cols-4 max-[900px]:grid-cols-3">
+        {error ? (
+          <div className="px-[0.1rem] py-[0.2rem] text-[0.96rem] text-[rgba(191,203,227,0.78)]">
+            {error}
+          </div>
+        ) : null}
         {!error &&
           weather?.daily.slice(1, 8).map((day) => (
-            <div className="forecast-row" key={day.date}>
+            <div
+              className="grid min-w-0 content-start justify-items-center gap-[0.3rem] px-[0.15rem] py-[0.35rem] max-[1500px]:gap-[0.24rem] max-[900px]:gap-[0.22rem] [@media(max-height:980px)]:gap-[0.24rem]"
+              key={day.date}
+            >
               <div
                 className={[
-                  "forecast-day",
-                  isWeekendDay(day.date) ? "forecast-day-weekend" : "",
+                  "text-[1rem] font-semibold",
+                  isWeekendDay(day.date) ? "text-[#ff7b7b]" : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
               >
                 {formatShortWeekday(day.date)}
               </div>
-              <div className="forecast-icon">
+              <div className="size-[2rem]">
                 <WeatherIcon code={day.weatherCode} isDay />
               </div>
-              <div className="forecast-description">{day.weatherDescription}</div>
-              <div className="forecast-precip">
+              <div className="min-h-[2.3em] max-w-[11ch] text-center text-[0.82rem] leading-[1.15] text-[rgba(219,234,254,0.82)]">
+                {day.weatherDescription}
+              </div>
+              <div className="w-auto text-center text-[0.82rem] [font-variant-numeric:tabular-nums] text-[rgba(219,234,254,0.82)]">
                 {day.precipitationProbabilityMax}%
               </div>
-              <div className="forecast-range">
-                <span>{Math.round(day.temperatureMax)}°</span>
-                <span>{Math.round(day.temperatureMin)}°</span>
+              <div className="grid [grid-template-columns:2.4ch_2.4ch] justify-center gap-x-[0.45rem] text-right text-[0.98rem] font-semibold [font-variant-numeric:tabular-nums]">
+                <span className="text-[#ffb347]">{Math.round(day.temperatureMax)}°</span>
+                <span className="text-[#76b8ff]">{Math.round(day.temperatureMin)}°</span>
               </div>
             </div>
           ))}

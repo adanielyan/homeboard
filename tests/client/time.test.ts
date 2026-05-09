@@ -17,10 +17,10 @@ describe("buildClockSnapshot", () => {
   it("formats the same moment for both configured time zones", () => {
     const snapshot = buildClockSnapshot(new Date("2026-05-09T18:15:00.000Z"), config);
 
-    expect(snapshot.primary.timeLabel).toBe("2:15 PM");
-    expect(snapshot.primary.preciseTimeLabel).toBe("2:15:00 PM");
-    expect(snapshot.secondary.timeLabel).toBe("11:15 AM");
-    expect(snapshot.secondary.preciseTimeLabel).toBe("11:15:00 AM");
+    expect(snapshot.primary.timeLabel).toBe("14:15");
+    expect(snapshot.primary.preciseTimeLabel).toBe("14:15:00");
+    expect(snapshot.secondary.timeLabel).toBe("11:15");
+    expect(snapshot.secondary.preciseTimeLabel).toBe("11:15:00");
     expect(snapshot.primary.dateLabel).toContain("May");
     expect(snapshot.secondary.dateLabel).toContain("May");
   });

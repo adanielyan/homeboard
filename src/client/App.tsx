@@ -22,6 +22,7 @@ import {
   type ClockSnapshot,
 } from "./services/currentTimeService";
 import { WeatherService } from "./services/weatherService";
+import { sectionPanelClassName } from "./components/SectionFrame";
 
 type BootstrapState =
   | { status: "loading" }
@@ -180,16 +181,18 @@ function App() {
 
   if (bootstrapState.status === "loading") {
     return (
-      <main className="board-shell">
-        <div className="board-loading">Loading Homeboard...</div>
+      <main className="h-dvh overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(45,120,255,0.18),transparent_32%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.12),transparent_28%),linear-gradient(180deg,#07111f_0%,#030914_100%)] p-[clamp(10px,1vw,20px)] font-sans text-board-text [letter-spacing:0.014em]">
+        <div className={`${sectionPanelClassName} grid h-full place-items-center bg-[rgba(4,12,24,0.7)] text-center`}>
+          Loading Homeboard...
+        </div>
       </main>
     );
   }
 
   if (bootstrapState.status === "error") {
     return (
-      <main className="board-shell">
-        <div className="board-loading board-error">
+      <main className="h-dvh overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(45,120,255,0.18),transparent_32%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.12),transparent_28%),linear-gradient(180deg,#07111f_0%,#030914_100%)] p-[clamp(10px,1vw,20px)] font-sans text-board-text [letter-spacing:0.014em]">
+        <div className={`${sectionPanelClassName} grid h-full place-items-center bg-[rgba(4,12,24,0.7)] p-8 text-center`}>
           <h1>Homeboard unavailable</h1>
           <p>{bootstrapState.message}</p>
         </div>
@@ -198,9 +201,9 @@ function App() {
   }
 
   return (
-    <main className="board-shell">
-      <div className="board-grid">
-        <section className="board-column board-column-left">
+    <main className="h-dvh overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(45,120,255,0.18),transparent_32%),radial-gradient(circle_at_top_right,rgba(14,165,233,0.12),transparent_28%),linear-gradient(180deg,#07111f_0%,#030914_100%)] p-[clamp(10px,1vw,20px)] font-sans text-board-text [letter-spacing:0.014em] max-[900px]:p-[10px]">
+      <div className="grid h-full gap-[clamp(12px,1vw,20px)] [grid-template-columns:minmax(0,1fr)_minmax(0,1fr)] max-[1280px]:grid-cols-1">
+        <section className="grid min-h-0 content-start gap-[clamp(12px,1vw,20px)] [grid-template-rows:minmax(16rem,auto)_auto_auto_auto] max-[1500px]:[grid-template-rows:minmax(14rem,auto)_auto_auto_auto] max-[1280px]:[grid-template-rows:minmax(11rem,auto)_auto_auto_auto] [@media(max-height:980px)]:[grid-template-rows:minmax(14rem,auto)_auto_auto_auto]">
           <WeatherCard
             config={bootstrapState.config}
             clock={clock}
@@ -212,7 +215,7 @@ function App() {
           <MiniMonthCalendars config={bootstrapState.config} />
         </section>
 
-        <section className="board-column board-column-right">
+        <section className="grid min-h-0 gap-[clamp(12px,1vw,20px)] [grid-template-rows:minmax(0,1fr)_minmax(0,1fr)] max-[1280px]:auto-rows-max max-[1280px]:grid-rows-none">
           <CalendarEventList
             config={bootstrapState.config}
             day={calendar?.today || null}

@@ -14,32 +14,55 @@ interface DayCell {
   date: number;
   isCurrentMonth: boolean;
   isToday: boolean;
+  isWeekend: boolean;
 }
 
-const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+const WEEKDAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 
 export function MiniMonthCalendars({ config }: MiniMonthCalendarsProps) {
   const months = buildMonthModels(config, new Date());
 
   return (
-    <div className="month-strip">
+    <div className="grid gap-[0.7rem] pt-[0.2rem] [grid-template-columns:repeat(3,minmax(0,1fr))] max-[900px]:grid-cols-1">
       {months.map((month) => (
-        <section className="month-card" key={month.key}>
-          <header className="month-header">{month.label}</header>
-          <div className="month-weekdays">
-            {WEEKDAY_LABELS.map((label) => (
-              <span className="month-weekday" key={label}>
+        <section
+          className="grid gap-[0.55rem] rounded-[18px] border border-[rgba(121,154,214,0.12)] bg-[rgba(7,17,31,0.22)] px-[0.9rem] py-[0.8rem]"
+          key={month.key}
+        >
+          <header className="text-center text-[0.95rem] font-bold uppercase text-board-text [letter-spacing:0.04em]">
+            {month.label}
+          </header>
+          <div className="grid grid-cols-7 gap-[0.2rem]">
+            {WEEKDAY_LABELS.map((label, index) => (
+              <span
+                className={[
+                  "grid min-h-[1.55rem] place-items-center text-[0.72rem] font-semibold [font-variant-numeric:tabular-nums]",
+                  index >= 5 ? "text-[#ff7b7b]" : "text-[rgba(191,203,227,0.72)]",
+                ].join(" ")}
+                key={label}
+              >
                 {label}
               </span>
             ))}
           </div>
-          <div className="month-grid">
+          <div className="grid grid-cols-7 gap-[0.2rem]">
             {month.weeks.flat().map((cell, index) => (
               <span
                 className={[
-                  "month-day",
-                  cell?.isCurrentMonth ? "" : "month-day-muted",
-                  cell?.isToday ? "month-day-today" : ""
+                  "grid min-h-[1.55rem] place-items-center rounded-full text-[0.86rem] [font-variant-numeric:tabular-nums]",
+                  cell?.isCurrentMonth
+                    ? ""
+                    : "text-[rgba(191,203,227,0.38)]",
+                  cell?.isWeekend
+                    ? cell?.isCurrentMonth
+                      ? "text-[#ff7b7b]"
+                      : "text-[rgba(255,123,123,0.45)]"
+                    : cell?.isCurrentMonth
+                      ? "text-board-text"
+                      : "",
+                  cell?.isToday
+                    ? "bg-[rgba(96,165,250,0.2)] shadow-[inset_0_0_0_1px_rgba(96,165,250,0.7)]"
+                    : "",
                 ]
                   .filter(Boolean)
                   .join(" ")}
@@ -70,7 +93,9 @@ function buildMonthModel(
   today: { year: number; month: number; day: number },
   locale: string
 ): MonthModel {
-  const monthStartWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const monthStartWeekday = toMondayFirstWeekday(
+    new Date(Date.UTC(year, month - 1, 1)).getUTCDay(),
+  );
   const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const prevMonth = shiftMonth(year, month, -1);
   const daysInPrevMonth = new Date(Date.UTC(prevMonth.year, prevMonth.month, 0)).getUTCDate();
@@ -81,7 +106,8 @@ function buildMonthModel(
     cells.push({
       date: daysInPrevMonth - index,
       isCurrentMonth: false,
-      isToday: false
+      isToday: false,
+      isWeekend: monthStartWeekday - index >= 5,
     });
   }
 
@@ -89,7 +115,10 @@ function buildMonthModel(
     cells.push({
       date,
       isCurrentMonth: true,
-      isToday: today.year === year && today.month === month && today.day === date
+      isToday: today.year === year && today.month === month && today.day === date,
+      isWeekend: toMondayFirstWeekday(
+        new Date(Date.UTC(year, month - 1, date)).getUTCDay(),
+      ) >= 5,
     });
   }
 
@@ -98,7 +127,10 @@ function buildMonthModel(
     cells.push({
       date,
       isCurrentMonth: false,
-      isToday: false
+      isToday: false,
+      isWeekend: toMondayFirstWeekday(
+        new Date(Date.UTC(year, month, date)).getUTCDay(),
+      ) >= 5,
     });
   }
 
@@ -123,6 +155,10 @@ function shiftMonth(year: number, month: number, offset: number): { year: number
     year: normalized.getUTCFullYear(),
     month: normalized.getUTCMonth() + 1
   };
+}
+
+function toMondayFirstWeekday(utcDay: number): number {
+  return (utcDay + 6) % 7;
 }
 
 function getZonedDateParts(value: Date, timeZone: string): { year: number; month: number; day: number } {

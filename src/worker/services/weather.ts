@@ -149,18 +149,31 @@ export function normalizeWeatherResponse(payload: OpenMeteoResponse, locationLab
     isDay: payload.current.is_day === 1
   };
 
-  const hourly: WeatherHourlyPoint[] = payload.hourly.time.slice(0, 10).map((time, index) => ({
-    time,
-    temperature: payload.hourly.temperature_2m[index],
-    apparentTemperature: payload.hourly.apparent_temperature[index],
-    precipitationProbability: payload.hourly.precipitation_probability[index],
-    precipitation: payload.hourly.precipitation[index],
-    weatherCode: payload.hourly.weather_code[index],
-    weatherDescription: describeWeatherCode(payload.hourly.weather_code[index]),
-    cloudCover: payload.hourly.cloud_cover[index],
-    windSpeed: payload.hourly.wind_speed_10m[index],
-    windGusts: payload.hourly.wind_gusts_10m[index]
-  }));
+  const nextHourlyIndex = payload.hourly.time.findIndex(
+    (time) => time > payload.current.time,
+  );
+  const hourlyStartIndex = nextHourlyIndex >= 0 ? nextHourlyIndex : 0;
+  const hourly: WeatherHourlyPoint[] = payload.hourly.time
+    .slice(hourlyStartIndex, hourlyStartIndex + 10)
+    .map((time, index) => {
+      const sourceIndex = hourlyStartIndex + index;
+
+      return {
+        time,
+        temperature: payload.hourly.temperature_2m[sourceIndex],
+        apparentTemperature: payload.hourly.apparent_temperature[sourceIndex],
+        precipitationProbability:
+          payload.hourly.precipitation_probability[sourceIndex],
+        precipitation: payload.hourly.precipitation[sourceIndex],
+        weatherCode: payload.hourly.weather_code[sourceIndex],
+        weatherDescription: describeWeatherCode(
+          payload.hourly.weather_code[sourceIndex],
+        ),
+        cloudCover: payload.hourly.cloud_cover[sourceIndex],
+        windSpeed: payload.hourly.wind_speed_10m[sourceIndex],
+        windGusts: payload.hourly.wind_gusts_10m[sourceIndex],
+      };
+    });
 
   const daily: WeatherDailyPoint[] = payload.daily.time.slice(0, 8).map((date, index) => ({
     date,

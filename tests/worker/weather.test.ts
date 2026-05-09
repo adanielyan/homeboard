@@ -38,6 +38,8 @@ describe("weather service", () => {
         },
         hourly: {
           time: [
+            "2026-05-09T09:00",
+            "2026-05-09T10:00",
             "2026-05-09T11:00",
             "2026-05-09T12:00",
             "2026-05-09T13:00",
@@ -47,16 +49,18 @@ describe("weather service", () => {
             "2026-05-09T17:00",
             "2026-05-09T18:00",
             "2026-05-09T19:00",
-            "2026-05-09T20:00"
+            "2026-05-09T20:00",
+            "2026-05-09T21:00",
+            "2026-05-09T22:00"
           ],
-          temperature_2m: [72, 74, 75, 76, 77, 77, 76, 74, 71, 67],
-          apparent_temperature: [72, 74, 76, 77, 78, 78, 76, 74, 71, 67],
-          precipitation_probability: [0, 0, 0, 0, 0, 0, 10, 10, 10, 10],
-          precipitation: [0, 0, 0, 0, 0, 0, 0.01, 0.01, 0.01, 0.01],
-          weather_code: [2, 2, 1, 1, 1, 1, 2, 2, 2, 1],
-          cloud_cover: [32, 30, 28, 28, 30, 32, 35, 38, 40, 18],
-          wind_speed_10m: [6, 6, 7, 7, 8, 8, 8, 7, 6, 5],
-          wind_gusts_10m: [9, 9, 10, 10, 11, 12, 11, 10, 9, 8]
+          temperature_2m: [69, 71, 72, 74, 75, 76, 77, 77, 76, 74, 71, 67],
+          apparent_temperature: [69, 72, 72, 74, 76, 77, 78, 78, 76, 74, 71, 67],
+          precipitation_probability: [0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 10, 10],
+          precipitation: [0, 0, 0, 0, 0, 0, 0, 0, 0.01, 0.01, 0.01, 0.01],
+          weather_code: [2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 1],
+          cloud_cover: [35, 33, 32, 30, 28, 28, 30, 32, 35, 38, 40, 18],
+          wind_speed_10m: [5, 6, 6, 6, 7, 7, 8, 8, 8, 7, 6, 5],
+          wind_gusts_10m: [8, 9, 9, 9, 10, 10, 11, 12, 11, 10, 9, 8]
         },
         daily: {
           time: [
@@ -109,6 +113,7 @@ describe("weather service", () => {
     expect(normalized.daily[0].sunrise).toBe("2026-05-09T06:05");
     expect(normalized.daily[0].sunset).toBe("2026-05-09T19:58");
     expect(normalized.hourly).toHaveLength(10);
+    expect(normalized.hourly[0].time).toBe("2026-05-09T11:00");
     expect(normalized.daily).toHaveLength(8);
   });
 });

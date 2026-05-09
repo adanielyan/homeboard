@@ -56,10 +56,10 @@ function formatDate(value: Date, locale: string, timeZone: string): string {
 
 function formatTime(value: Date, locale: string, timeZone: string, includeSeconds = false): string {
   return new Intl.DateTimeFormat(locale, {
-    hour: "numeric",
+    hour: "2-digit",
     minute: "2-digit",
     second: includeSeconds ? "2-digit" : undefined,
-    hour12: true,
+    hour12: false,
     timeZone
   }).format(value);
 }
