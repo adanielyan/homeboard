@@ -48,7 +48,9 @@ export function formatEventTimeLabel(dateTime: string, locale: string, timeZone:
     hour: "numeric",
     minute: "2-digit",
     timeZone
-  }).format(new Date(dateTime));
+  })
+    .format(new Date(dateTime))
+    .replace(/\s+(AM|PM)$/i, "\u00A0$1");
 }
 
 export function formatEventTimeRange(event: CalendarEvent, locale: string, timeZone: string): string {

@@ -1,239 +1,216 @@
-import type { CalendarDayGroup, CalendarEvent, CalendarEventsResponse } from "../../shared/types";
-import { MemoryCache } from "../utils/cache";
+import ICAL from "ical.js";
+import type {
+  CalendarDayGroup,
+  CalendarEvent,
+  CalendarEventsResponse,
+} from "../../shared/types";
 import { HttpError } from "../utils/http";
 
-const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
-const CALENDAR_CACHE_TTL_MS = 5 * 60 * 1000;
-const ACCESS_TOKEN_SAFETY_BUFFER_MS = 60 * 1000;
+const RECURRENCE_LIMIT = 365;
 
-const calendarCache = new MemoryCache();
-const tokenCache = new MemoryCache();
-
-interface GoogleTokenResponse {
-  access_token: string;
-  expires_in: number;
-  token_type: string;
-}
-
-interface GoogleCalendarEvent {
-  id: string;
-  summary?: string;
-  description?: string;
-  location?: string;
-  start?: {
-    date?: string;
-    dateTime?: string;
-  };
-  end?: {
-    date?: string;
-    dateTime?: string;
-  };
-}
-
-interface GoogleCalendarResponse {
-  items?: GoogleCalendarEvent[];
+export interface CalendarWindow {
+  startMs: number;
+  endMs: number;
+  timeMin: string;
+  timeMax: string;
 }
 
 export async function getCalendarEvents(env: Env): Promise<CalendarEventsResponse> {
-  const cacheKey = `${env.GOOGLE_CALENDAR_ID}:${env.PRIMARY_TIMEZONE}:${env.DISPLAY_LOCALE || "en-US"}`;
-  const cached = calendarCache.get<CalendarEventsResponse>(cacheKey);
-  if (cached) {
-    return cached;
+  const url = env.CALENDAR_ICAL_URL;
+  if (!url) {
+    throw new HttpError(
+      500,
+      "calendar_misconfigured",
+      "CALENDAR_ICAL_URL is not set.",
+    );
   }
 
-  const accessToken = await getGoogleAccessToken(env);
-  const configLocale = env.DISPLAY_LOCALE || "en-US";
   const timeZone = env.PRIMARY_TIMEZONE;
-  const { timeMin, timeMax } = createCalendarWindow(timeZone);
-  const url = new URL(
-    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(env.GOOGLE_CALENDAR_ID)}/events`
-  );
-  url.search = new URLSearchParams({
-    singleEvents: "true",
-    orderBy: "startTime",
-    timeMin,
-    timeMax,
-    timeZone,
-    maxResults: "50"
-  }).toString();
+  const locale = env.DISPLAY_LOCALE || "en-US";
 
-  const response = await fetch(url, {
-    headers: {
-      authorization: `Bearer ${accessToken}`
-    }
-  });
-
+  const response = await fetch(url, { cache: "no-store" } as RequestInit);
   if (!response.ok) {
-    throw new HttpError(502, "calendar_upstream_error", "Unable to load calendar events.");
+    throw new HttpError(
+      502,
+      "calendar_upstream_error",
+      "Unable to load calendar feed.",
+    );
   }
 
-  const payload = (await response.json()) as GoogleCalendarResponse;
-  const normalized = normalizeCalendarResponse(payload, timeZone, configLocale);
-  calendarCache.set(cacheKey, normalized, CALENDAR_CACHE_TTL_MS);
-  return normalized;
+  const ics = await response.text();
+  const window = createCalendarWindow(timeZone);
+  const events = parseIcsEvents(ics, window);
+  return normalizeCalendarResponse(events, timeZone, locale);
 }
 
-export function createCalendarWindow(timeZone: string, now = new Date()): { timeMin: string; timeMax: string } {
+export function createCalendarWindow(timeZone: string, now = new Date()): CalendarWindow {
   const startOfDay = zonedDayToUtc(timeZone, formatZonedDate(now, timeZone));
   const endOfWindow = new Date(startOfDay.getTime() + 8 * 24 * 60 * 60 * 1000);
-
   return {
+    startMs: startOfDay.getTime(),
+    endMs: endOfWindow.getTime(),
     timeMin: startOfDay.toISOString(),
-    timeMax: endOfWindow.toISOString()
+    timeMax: endOfWindow.toISOString(),
   };
 }
 
-export function normalizeCalendarResponse(
-  payload: GoogleCalendarResponse,
-  timeZone: string,
-  locale: string
-): CalendarEventsResponse {
-  const groups = new Map<string, CalendarEvent[]>();
-  const todayDate = formatZonedDate(new Date(), timeZone);
+export function parseIcsEvents(
+  ics: string,
+  window: { startMs: number; endMs: number },
+): CalendarEvent[] {
+  const jcal = ICAL.parse(ics);
+  const vcalendar = new ICAL.Component(jcal);
 
-  for (let offset = 0; offset <= 7; offset += 1) {
-    const date = shiftDate(todayDate, offset);
-    groups.set(date, []);
+  for (const vtimezone of vcalendar.getAllSubcomponents("vtimezone")) {
+    const tzid = vtimezone.getFirstPropertyValue("tzid");
+    if (typeof tzid === "string" && !ICAL.TimezoneService.has(tzid)) {
+      ICAL.TimezoneService.register(vtimezone);
+    }
   }
 
-  for (const item of payload.items || []) {
-    const normalized = normalizeCalendarEvent(item, timeZone);
-    if (!normalized) {
+  const grouped = new Map<
+    string,
+    { master: ICAL.Component | null; exceptions: ICAL.Component[] }
+  >();
+
+  for (const vevent of vcalendar.getAllSubcomponents("vevent")) {
+    const event = new ICAL.Event(vevent);
+    const uid = event.uid;
+    if (!grouped.has(uid)) {
+      grouped.set(uid, { master: null, exceptions: [] });
+    }
+    const entry = grouped.get(uid)!;
+    if (event.isRecurrenceException()) {
+      entry.exceptions.push(vevent);
+    } else {
+      entry.master = vevent;
+    }
+  }
+
+  const out: CalendarEvent[] = [];
+  for (const { master, exceptions } of grouped.values()) {
+    if (!master) {
       continue;
     }
+    const event = new ICAL.Event(master);
+    for (const ex of exceptions) {
+      event.relateException(ex);
+    }
 
-    const key = normalized.isAllDay ? normalized.start.slice(0, 10) : formatZonedDate(new Date(normalized.start), timeZone);
+    if (event.isRecurring()) {
+      const iter = event.iterator();
+      let count = 0;
+      let next = iter.next();
+      while (next && count < RECURRENCE_LIMIT) {
+        count += 1;
+        if (next.toJSDate().getTime() >= window.endMs) {
+          break;
+        }
+        const details = event.getOccurrenceDetails(next);
+        const occEnd = details.endDate.toJSDate().getTime();
+        if (occEnd > window.startMs) {
+          out.push(
+            buildCalendarEvent(
+              details.item.uid,
+              details.startDate,
+              details.endDate,
+              details.item,
+            ),
+          );
+        }
+        next = iter.next();
+      }
+    } else {
+      const occStart = event.startDate.toJSDate().getTime();
+      const occEnd = event.endDate.toJSDate().getTime();
+      if (occEnd > window.startMs && occStart < window.endMs) {
+        out.push(
+          buildCalendarEvent(event.uid, event.startDate, event.endDate, event),
+        );
+      }
+    }
+  }
+
+  return out;
+}
+
+function buildCalendarEvent(
+  uid: string,
+  start: ICAL.Time,
+  end: ICAL.Time,
+  source: ICAL.Event,
+): CalendarEvent {
+  const isAllDay = start.isDate;
+  const title = (source.summary || "").trim() || "Untitled event";
+  const description = source.description || undefined;
+  const location = source.location || undefined;
+
+  if (isAllDay) {
+    const startDateString = formatIcalDateOnly(start);
+    const exclusiveEnd = formatIcalDateOnly(end);
+    const inclusiveEnd = shiftDate(exclusiveEnd, -1) || startDateString;
+    return {
+      id: `${uid}@${startDateString}`,
+      title,
+      start: `${startDateString}T00:00:00.000Z`,
+      end: `${inclusiveEnd}T23:59:59.999Z`,
+      isAllDay: true,
+      description,
+      location,
+    };
+  }
+
+  const startIso = start.toJSDate().toISOString();
+  return {
+    id: `${uid}@${startIso}`,
+    title,
+    start: startIso,
+    end: end.toJSDate().toISOString(),
+    isAllDay: false,
+    description,
+    location,
+  };
+}
+
+function formatIcalDateOnly(time: ICAL.Time): string {
+  return `${String(time.year).padStart(4, "0")}-${String(time.month).padStart(2, "0")}-${String(time.day).padStart(2, "0")}`;
+}
+
+export function normalizeCalendarResponse(
+  events: CalendarEvent[],
+  timeZone: string,
+  locale: string,
+): CalendarEventsResponse {
+  const todayDate = formatZonedDate(new Date(), timeZone);
+  const groups = new Map<string, CalendarEvent[]>();
+  for (let offset = 0; offset <= 7; offset += 1) {
+    groups.set(shiftDate(todayDate, offset), []);
+  }
+
+  const nowMs = Date.now();
+  for (const event of events) {
+    const key = event.isAllDay
+      ? event.start.slice(0, 10)
+      : formatZonedDate(new Date(event.start), timeZone);
     if (!groups.has(key)) {
       continue;
     }
-
-    groups.get(key)?.push(normalized);
+    if (key === todayDate && !event.isAllDay && new Date(event.end).getTime() < nowMs) {
+      continue;
+    }
+    groups.get(key)!.push(event);
   }
 
   const orderedDates = [...groups.keys()].sort();
   const dayGroups: CalendarDayGroup[] = orderedDates.map((date) => ({
     date,
-    events: (groups.get(date) || []).sort(compareEvents(locale, timeZone))
+    events: (groups.get(date) || []).sort(compareEvents(locale, timeZone)),
   }));
 
   return {
     today: dayGroups[0] || { date: todayDate, events: [] },
-    upcomingDays: dayGroups.slice(1)
+    upcomingDays: dayGroups.slice(1),
   };
-}
-
-export function normalizeCalendarEvent(item: GoogleCalendarEvent, timeZone: string): CalendarEvent | null {
-  const title = item.summary?.trim() || "Untitled event";
-  const isAllDay = Boolean(item.start?.date && item.end?.date);
-  const start = item.start?.dateTime || item.start?.date;
-  const end = item.end?.dateTime || item.end?.date;
-
-  if (!start || !end) {
-    return null;
-  }
-
-  const normalizedStart = isAllDay ? `${item.start?.date}T00:00:00.000Z` : start;
-  const normalizedEnd = isAllDay
-    ? `${shiftDate(item.end?.date || item.start?.date || "", -1)}T23:59:59.999Z`
-    : end;
-
-  return {
-    id: item.id,
-    title,
-    start: normalizedStart,
-    end: normalizedEnd,
-    isAllDay,
-    description: item.description,
-    location: item.location
-  };
-}
-
-async function getGoogleAccessToken(env: Env): Promise<string> {
-  const cached = tokenCache.get<string>("google_access_token");
-  if (cached) {
-    return cached;
-  }
-
-  const assertion = await createJwtAssertion(env);
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded"
-    },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion
-    }).toString()
-  });
-
-  if (!response.ok) {
-    throw new HttpError(502, "google_auth_error", "Unable to authenticate with Google Calendar.");
-  }
-
-  const payload = (await response.json()) as GoogleTokenResponse;
-  tokenCache.set(
-    "google_access_token",
-    payload.access_token,
-    Math.max((payload.expires_in * 1000) - ACCESS_TOKEN_SAFETY_BUFFER_MS, 60 * 1000)
-  );
-  return payload.access_token;
-}
-
-async function createJwtAssertion(env: Env): Promise<string> {
-  const issuedAt = Math.floor(Date.now() / 1000);
-  const expiresAt = issuedAt + 3600;
-  const header = base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-  const payload = base64UrlEncode(
-    JSON.stringify({
-      iss: env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      scope: CALENDAR_SCOPE,
-      aud: "https://oauth2.googleapis.com/token",
-      exp: expiresAt,
-      iat: issuedAt
-    })
-  );
-  const unsignedToken = `${header}.${payload}`;
-  const signature = await signJwt(unsignedToken, env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY);
-  return `${unsignedToken}.${signature}`;
-}
-
-async function signJwt(input: string, privateKeyPem: string): Promise<string> {
-  const normalizedKey = privateKeyPem.replace(/\\n/g, "\n");
-  const keyData = pemToArrayBuffer(normalizedKey);
-  const cryptoKey = await crypto.subtle.importKey(
-    "pkcs8",
-    keyData,
-    {
-      name: "RSASSA-PKCS1-v1_5",
-      hash: "SHA-256"
-    },
-    false,
-    ["sign"]
-  );
-  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, new TextEncoder().encode(input));
-  return base64UrlEncode(signature);
-}
-
-function base64UrlEncode(input: string | ArrayBuffer): string {
-  const bytes =
-    typeof input === "string" ? new TextEncoder().encode(input) : new Uint8Array(input);
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/u, "");
-}
-
-function pemToArrayBuffer(pem: string): ArrayBuffer {
-  const base64 = pem.replace(/-----BEGIN PRIVATE KEY-----/g, "").replace(/-----END PRIVATE KEY-----/g, "").replace(/\s+/g, "");
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-
-  return bytes.buffer;
 }
 
 function compareEvents(locale: string, timeZone: string) {
@@ -241,11 +218,13 @@ function compareEvents(locale: string, timeZone: string) {
     if (left.isAllDay !== right.isAllDay) {
       return left.isAllDay ? -1 : 1;
     }
-
-    const leftTime = left.isAllDay ? left.start : formatEventSortKey(left.start, locale, timeZone);
-    const rightTime = right.isAllDay ? right.start : formatEventSortKey(right.start, locale, timeZone);
-
-    return leftTime.localeCompare(rightTime);
+    const leftKey = left.isAllDay
+      ? left.start
+      : formatEventSortKey(left.start, locale, timeZone);
+    const rightKey = right.isAllDay
+      ? right.start
+      : formatEventSortKey(right.start, locale, timeZone);
+    return leftKey.localeCompare(rightKey);
   };
 }
 
@@ -255,7 +234,7 @@ function formatEventSortKey(value: string, locale: string, timeZone: string): st
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
-    timeZone
+    timeZone,
   }).format(new Date(value));
 }
 
@@ -264,7 +243,7 @@ export function formatZonedDate(date: Date, timeZone: string): string {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-    timeZone
+    timeZone,
   });
   const parts = formatter.formatToParts(date);
   const year = parts.find((part) => part.type === "year")?.value;
@@ -282,7 +261,6 @@ export function shiftDate(dateString: string, days: number): string {
   if (!dateString) {
     return dateString;
   }
-
   const date = new Date(`${dateString}T00:00:00.000Z`);
   date.setUTCDate(date.getUTCDate() + days);
   return date.toISOString().slice(0, 10);
@@ -298,7 +276,7 @@ function zonedDayToUtc(timeZone: string, dateString: string): Date {
       const hourInZone = new Intl.DateTimeFormat("en-US", {
         hour: "2-digit",
         hour12: false,
-        timeZone
+        timeZone,
       }).format(candidate);
 
       if (hourInZone === "00" || hourInZone === "24") {

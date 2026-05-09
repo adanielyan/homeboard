@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep *)",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(npx vitest *)",
+      "Bash(npm run *)",
+      "Bash(curl -sS -H \"Authorization: Bearer dFsOSRoJPdVgrGEiwlbukAWAZx8j2TSx1Z8HWa98wOM=\" http://localhost:5174/api/calendar/events)",
+      "Bash(kill brq2igtu2 *)",
+      "Bash(pkill -f \"vite\")",
+      "Bash(sed 's|=.*|=<value>|')",
+      "Bash(awk '/^GOOGLE_CALENDAR_ID=/ { print length\\($0\\), $0 }' /Users/adanielyan/Projects/homeboard/.dev.vars)",
+      "Bash(awk '/^GOOGLE_CALENDAR_ID=/ { val = substr\\($0, 20\\); for \\(i=1; i<=length\\(val\\); i++\\) { c = substr\\(val, i, 1\\); printf \"[%d]%s \", i, c } print \"\" }' /Users/adanielyan/Projects/homeboard/.dev.vars)",
+      "Bash(curl -sS -H \"Authorization: Bearer dFsOSRoJPdVgrGEiwlbukAWAZx8j2TSx1Z8HWa98wOM=\" http://localhost:5174/api/calendar/diagnose)",
+      "Bash(kill builzggt6 *)",
+      "Bash(npm view *)",
+      "Bash(npm install *)",
+      "Bash(node *)",
+      "Bash(git stash *)",
+      "Bash(awk 'NR==53 { gsub\\(/\\\\xc2\\\\xa0/, \"\\\\\\\\u00A0\"\\); print } NR!=53 { print }' /Users/adanielyan/Projects/homeboard/src/client/lib/formatters.ts)",
+      "Bash(mv /tmp/_f.ts /Users/adanielyan/Projects/homeboard/src/client/lib/formatters.ts)",
+      "Bash(kill buxov6exg *)",
+      "Bash(pkill -f vite)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "mastra"
+  ]
+}

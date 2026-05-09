@@ -8,9 +8,8 @@ import {
   CloudRain,
   CloudSnow,
   CloudSun,
-  CloudSunRain,
   type LucideIcon,
-  MoonStar,
+  Moon,
   Sun
 } from "lucide-react";
 
@@ -28,18 +27,18 @@ export function WeatherIcon({ code, isDay }: WeatherIconProps) {
     return (
       <span className="relative block size-full" aria-hidden="true">
         <IconComponent
-          className={`${iconClassName} absolute inset-0 text-[#9fb4cc]`}
+          className={`${iconClassName} absolute inset-0 text-weather-cloud`}
           strokeWidth={1.75}
         />
         <IconComponent
-          className={`${iconClassName} absolute inset-0 text-[#f6d86b] [-webkit-mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_0%,rgba(0,0,0,1)_24%,rgba(0,0,0,0.35)_48%,rgba(0,0,0,0)_78%)] [mask-image:linear-gradient(to_bottom,rgba(0,0,0,1)_0%,rgba(0,0,0,1)_24%,rgba(0,0,0,0.35)_48%,rgba(0,0,0,0)_78%)]`}
+          className={`${iconClassName} absolute inset-0 text-weather-sun [-webkit-mask-image:linear-gradient(to_bottom,var(--color-mask-on)_0%,var(--color-mask-on)_24%,var(--color-mask-mid)_48%,var(--color-mask-off)_78%)] [mask-image:linear-gradient(to_bottom,var(--color-mask-on)_0%,var(--color-mask-on)_24%,var(--color-mask-mid)_48%,var(--color-mask-off)_78%)]`}
           strokeWidth={1.75}
         />
       </span>
     );
   }
 
-  const toneClassName = resolveWeatherToneClass(code);
+  const toneClassName = resolveWeatherToneClass(code, isDay);
 
   return (
     <IconComponent
@@ -56,7 +55,7 @@ function resolveWeatherIcon(code: number, isDay: boolean): LucideIcon {
   }
 
   if (code >= 80) {
-    return isDay ? CloudSunRain : CloudMoonRain;
+    return CloudRain;
   }
 
   if (code >= 71) {
@@ -68,7 +67,7 @@ function resolveWeatherIcon(code: number, isDay: boolean): LucideIcon {
   }
 
   if (code >= 51) {
-    return CloudDrizzle;
+    return isDay ? CloudDrizzle : CloudMoonRain;
   }
 
   if (code === 45 || code === 48) {
@@ -83,21 +82,25 @@ function resolveWeatherIcon(code: number, isDay: boolean): LucideIcon {
     return isDay ? CloudSun : CloudMoon;
   }
 
-  return isDay ? Sun : MoonStar;
+  return isDay ? Sun : Moon;
 }
 
-function resolveWeatherToneClass(code: number): string {
+function resolveWeatherToneClass(code: number, isDay: boolean): string {
   if (code >= 71) {
-    return "text-[#f8fbff]";
+    return "text-weather-snow";
   }
 
   if (code >= 51) {
-    return "text-[#67b1ff]";
+    return "text-weather-rain";
   }
 
   if (code === 45 || code === 48 || code === 3) {
-    return "text-[#9fb4cc]";
+    return "text-weather-cloud";
   }
 
-  return "text-[#f6d86b]";
+  if (!isDay) {
+    return "text-weather-moon";
+  }
+
+  return "text-weather-sun";
 }

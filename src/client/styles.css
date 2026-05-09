@@ -2,9 +2,170 @@
 
 @theme {
   --font-sans: "SF Pro Display", "Segoe UI", sans-serif;
-  --color-board-text: #e6eefb;
-  --shadow-board-panel: inset 0 1px 0 rgba(255, 255, 255, 0.03),
-    0 24px 60px rgba(0, 0, 0, 0.25);
+
+  --rgb-deep-blue: 7, 17, 31;
+  --rgb-soft-blue: 121, 154, 214;
+  --rgb-link-blue: 96, 165, 250;
+  --rgb-icon-blue: 118, 184, 255;
+  --rgb-sky-blue: 103, 177, 255;
+  --rgb-frost: 219, 234, 254;
+  --rgb-pale-grey: 226, 232, 240;
+  --rgb-cool-grey: 191, 203, 227;
+  --rgb-coral: 255, 123, 123;
+  --rgb-black: 0, 0, 0;
+
+  --color-board-text: rgba(230, 238, 251, 1);
+  --color-board-bg-start: rgba(var(--rgb-deep-blue), 1);
+  --color-board-bg-end: rgba(3, 9, 20, 1);
+  --color-board-glow-warm: rgba(45, 120, 255, 0.18);
+  --color-board-glow-cool: rgba(14, 165, 233, 0.12);
+
+  --color-panel-border: rgba(124, 158, 224, 0.2);
+  --color-panel-bg-start: rgba(11, 22, 40, 0.92);
+  --color-panel-bg-end: rgba(8, 16, 29, 0.96);
+
+  --color-card-border: rgba(var(--rgb-soft-blue), 0.12);
+  --color-card-border-soft: rgba(var(--rgb-soft-blue), 0.1);
+  --color-card-bg-strong: rgba(var(--rgb-deep-blue), 0.34);
+  --color-card-bg: rgba(var(--rgb-deep-blue), 0.28);
+  --color-card-bg-soft: rgba(var(--rgb-deep-blue), 0.22);
+  --color-card-bg-ongoing: rgba(40, 60, 90, 0.6);
+  --color-overlay: rgba(4, 12, 24, 0.7);
+
+  --color-hero-glow: rgba(72, 149, 255, 0.18);
+  --color-hero-bg-start: rgba(6, 26, 54, 0.85);
+  --color-hero-bg-end: rgba(2, 8, 16, 0.9);
+
+  --color-today-bg: rgba(var(--rgb-link-blue), 0.2);
+  --color-today-ring: rgba(var(--rgb-link-blue), 0.7);
+
+  --color-text-strong: rgba(var(--rgb-pale-grey), 0.9);
+  --color-text-body: rgba(var(--rgb-pale-grey), 0.82);
+  --color-text-frost: rgba(var(--rgb-frost), 0.82);
+  --color-text-frost-soft: rgba(var(--rgb-frost), 0.74);
+  --color-text-muted: rgba(var(--rgb-cool-grey), 0.78);
+  --color-text-subtle: rgba(var(--rgb-cool-grey), 0.72);
+  --color-text-faint: rgba(var(--rgb-cool-grey), 0.38);
+  --color-text-info: rgba(186, 205, 238, 0.88);
+  --color-text-date: rgba(var(--rgb-frost), 1);
+  --color-text-link: rgba(var(--rgb-link-blue), 1);
+  --color-text-eyebrow: rgba(127, 180, 255, 1);
+  --color-text-weekend: rgba(var(--rgb-coral), 1);
+  --color-text-weekend-faint: rgba(var(--rgb-coral), 0.45);
+
+  --color-icon-section: rgba(var(--rgb-icon-blue), 1);
+
+  --color-tone-sun-edge: rgba(245, 154, 194, 1);
+  --color-tone-night: rgba(124, 183, 255, 1);
+  --color-tone-day: rgba(255, 209, 92, 1);
+
+  --color-temp-freezing: rgba(74, 141, 255, 1);
+  --color-temp-cold: rgba(135, 199, 255, 1);
+  --color-temp-warm: rgba(255, 179, 71, 1);
+  --color-temp-hot: rgba(255, 107, 107, 1);
+  --color-temp-high: rgba(255, 183, 77, 1);
+  --color-temp-low: rgba(var(--rgb-sky-blue), 1);
+  --color-temp-min: rgba(var(--rgb-icon-blue), 1);
+
+  --color-weather-cloud: rgba(159, 180, 204, 1);
+  --color-weather-moon: rgba(203, 213, 225, 1);
+  --color-weather-sun: rgba(246, 216, 107, 1);
+  --color-weather-snow: rgba(248, 251, 255, 1);
+  --color-weather-rain: rgba(var(--rgb-sky-blue), 1);
+
+  --color-dot-mama: rgba(244, 114, 182, 1);
+  --color-dot-papa: rgba(139, 92, 246, 1);
+  --color-dot-margaret: rgba(20, 184, 166, 1);
+  --color-dot-arthur: rgba(59, 130, 246, 1);
+  --color-dot-liza: rgba(34, 197, 94, 1);
+  --color-dot-default: rgba(148, 163, 184, 1);
+
+  --color-event-1: rgba(59, 130, 246, 1);
+  --color-event-2: rgba(132, 204, 22, 1);
+  --color-event-3: rgba(249, 115, 22, 1);
+  --color-event-4: rgba(168, 85, 247, 1);
+  --color-event-5: rgba(20, 184, 166, 1);
+  --color-event-6: rgba(244, 63, 94, 1);
+  --color-event-7: rgba(139, 92, 246, 1);
+
+  --color-mask-on: rgba(var(--rgb-black), 1);
+  --color-mask-mid: rgba(var(--rgb-black), 0.35);
+  --color-mask-off: rgba(var(--rgb-black), 0);
+
+  --color-shadow-highlight: rgba(255, 255, 255, 0.03);
+  --color-shadow-deep: rgba(var(--rgb-black), 0.25);
+
+  --shadow-board-panel: inset 0 1px 0 var(--color-shadow-highlight),
+    0 24px 60px var(--color-shadow-deep);
+
+  --animate-event-soon: event-soon 1.6s ease-in-out infinite;
+  --animate-event-ongoing: event-ongoing 2.6s ease-in-out infinite;
+  --animate-event-shine: event-shine 3.2s linear infinite;
+  --animate-screen-saver: screen-saver 300s linear infinite;
+}
+
+@keyframes screen-saver {
+  0%,
+  93% {
+    transform: translateX(-130%) skewX(-8deg) scaleY(1);
+    opacity: 0;
+  }
+  93.5% {
+    opacity: 1;
+  }
+  96.5% {
+    transform: translateX(120%) skewX(-14deg) scaleY(1.06);
+    opacity: 1;
+  }
+  99.5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(360%) skewX(-8deg) scaleY(1);
+    opacity: 0;
+  }
+}
+
+@keyframes event-soon {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(244, 114, 182, 0),
+      inset 0 0 0 1px rgba(244, 114, 182, 0.25);
+  }
+  50% {
+    box-shadow:
+      0 0 28px 4px rgba(244, 114, 182, 0.55),
+      inset 0 0 0 1px rgba(244, 114, 182, 0.85);
+  }
+}
+
+@keyframes event-ongoing {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.012);
+  }
+}
+
+@keyframes event-shine {
+  0% {
+    transform: translateX(-120%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(420%) skewX(-12deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-event-soon,
+  .animate-event-ongoing,
+  .animate-event-shine,
+  .animate-screen-saver {
+    animation: none;
+  }
 }
 
 @layer base {

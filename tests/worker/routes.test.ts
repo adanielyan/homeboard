@@ -13,9 +13,7 @@ const env = {
   PRIMARY_TIMEZONE_LABEL: "Home",
   SECONDARY_TIMEZONE_LABEL: "West Coast",
   DISPLAY_LOCALE: "en-US",
-  GOOGLE_CALENDAR_ID: "calendar-id",
-  GOOGLE_SERVICE_ACCOUNT_EMAIL: "svc@example.com",
-  GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY: "-----BEGIN PRIVATE KEY-----\\nabc\\n-----END PRIVATE KEY-----\\n",
+  CALENDAR_ICAL_URL: "https://example.com/calendar.ics",
   ASSETS: {
     fetch: vi.fn(async () => new Response("asset"))
   }
@@ -122,38 +120,23 @@ describe("worker routes", () => {
   it("returns grouped calendar data from the API", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-05-09T14:00:00.000Z"));
-    vi.spyOn(crypto.subtle, "importKey").mockResolvedValue({} as CryptoKey);
-    vi.spyOn(crypto.subtle, "sign").mockResolvedValue(new Uint8Array([1, 2, 3]).buffer);
+
+    const ics = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Test//EN",
+      "BEGIN:VEVENT",
+      "UID:1",
+      "SUMMARY:Team Standup",
+      "DTSTART:20260509T180000Z",
+      "DTEND:20260509T183000Z",
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
 
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValueOnce(
-          new Response(
-            JSON.stringify({
-              access_token: "google-token",
-              expires_in: 3600,
-              token_type: "Bearer"
-            }),
-            { status: 200 }
-          )
-        )
-        .mockResolvedValueOnce(
-          new Response(
-            JSON.stringify({
-              items: [
-                {
-                  id: "1",
-                  summary: "Team Standup",
-                  start: { dateTime: "2026-05-09T09:00:00-04:00" },
-                  end: { dateTime: "2026-05-09T09:30:00-04:00" }
-                }
-              ]
-            }),
-            { status: 200 }
-          )
-        )
+      vi.fn(async () => new Response(ics, { status: 200 })),
     );
 
     const response = await worker.fetch(

@@ -3,4 +3,4 @@ export const DEFAULT_CALENDAR_POLL_INTERVAL_MS = 5 * 60 * 1000;
 export const DEFAULT_CLOCK_TICK_INTERVAL_MS = 1000;
 export const DEFAULT_LOCALE = "en-US";
 export const MAX_TODAY_EVENTS = 8;
-export const MAX_UPCOMING_EVENTS_PER_DAY = 2;
+export const MAX_UPCOMING_EVENTS_PER_DAY = 4;

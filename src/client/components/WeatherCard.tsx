@@ -21,11 +21,11 @@ export function WeatherCard({ config, clock, weather, error }: WeatherCardProps)
     : null;
   const heroBackdropStyle = {
     backgroundImage:
-      "radial-gradient(circle at 18% 12%, rgba(72,149,255,0.18), transparent 18%), linear-gradient(180deg, rgba(6,26,54,0.85), rgba(2,8,16,0.9)), url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='180' viewBox='0 0 300 180'%3E%3Cg fill='white' fill-opacity='.12'%3E%3Ccircle cx='18' cy='22' r='1.2'/%3E%3Ccircle cx='60' cy='40' r='1'/%3E%3Ccircle cx='112' cy='26' r='1.2'/%3E%3Ccircle cx='174' cy='34' r='1.1'/%3E%3Ccircle cx='210' cy='18' r='1.2'/%3E%3Ccircle cx='268' cy='42' r='1'/%3E%3Ccircle cx='242' cy='78' r='1.1'/%3E%3Ccircle cx='54' cy='94' r='1.2'/%3E%3Ccircle cx='118' cy='112' r='1'/%3E%3Ccircle cx='276' cy='126' r='1.2'/%3E%3C/g%3E%3C/svg%3E\")",
+      "radial-gradient(circle at 18% 12%, var(--color-hero-glow), transparent 18%), linear-gradient(180deg, var(--color-hero-bg-start), var(--color-hero-bg-end)), url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='180' viewBox='0 0 300 180'%3E%3Cg fill='white' fill-opacity='.12'%3E%3Ccircle cx='18' cy='22' r='1.2'/%3E%3Ccircle cx='60' cy='40' r='1'/%3E%3Ccircle cx='112' cy='26' r='1.2'/%3E%3Ccircle cx='174' cy='34' r='1.1'/%3E%3Ccircle cx='210' cy='18' r='1.2'/%3E%3Ccircle cx='268' cy='42' r='1'/%3E%3Ccircle cx='242' cy='78' r='1.1'/%3E%3Ccircle cx='54' cy='94' r='1.2'/%3E%3Ccircle cx='118' cy='112' r='1'/%3E%3Ccircle cx='276' cy='126' r='1.2'/%3E%3C/g%3E%3C/svg%3E\")",
   } as const;
 
   return (
-    <section className="relative min-h-0 overflow-hidden rounded-[24px] border border-[rgba(124,158,224,0.2)] bg-[linear-gradient(180deg,rgba(11,22,40,0.92)_0%,rgba(8,16,29,0.96)_100%)] shadow-board-panel">
+    <section className="relative min-h-0 overflow-hidden rounded-[24px] border border-panel-border bg-[linear-gradient(180deg,var(--color-panel-bg-start)_0%,var(--color-panel-bg-end)_100%)] shadow-board-panel">
       <div className="absolute inset-0 opacity-[0.98]" style={heroBackdropStyle} />
       <div className="relative z-[1] grid h-full grid-rows-[auto_minmax(0,1fr)] gap-[clamp(0.18rem,0.35vw,0.4rem)] p-[clamp(14px,1.2vw,22px)] max-[1500px]:p-4 [@media(max-height:980px)]:p-4">
         <header className="grid gap-3 sm:flex sm:items-start sm:justify-between">
@@ -33,18 +33,18 @@ export function WeatherCard({ config, clock, weather, error }: WeatherCardProps)
             <div className="max-w-full text-[clamp(1.45rem,1.95vw,2.15rem)] leading-[1.05] font-semibold [letter-spacing:0.012em]">
               {weather?.locationLabel || config.weatherLocationLabel}
             </div>
-            <div className="text-[clamp(0.82rem,0.95vw,1rem)] text-[rgba(219,234,254,0.82)]">
+            <div className="text-[clamp(0.82rem,0.95vw,1rem)] text-text-frost">
               {clock?.primary.dateLabel || "Loading time..."}
             </div>
           </div>
           <div className="grid min-w-0 content-start gap-[0.08rem] text-left sm:text-right">
-            <div className="text-[0.78rem] uppercase text-[#7fb4ff] [letter-spacing:0.12em]">
+            <div className="text-[0.78rem] uppercase text-text-eyebrow [letter-spacing:0.12em]">
               {config.secondaryTimezoneLabel}
             </div>
             <div className="text-[clamp(1.05rem,1.45vw,1.6rem)] leading-none font-semibold">
               {clock?.secondary.timeLabel || "--:--"}
             </div>
-            <div className="text-[clamp(0.82rem,0.95vw,1rem)] text-[rgba(219,234,254,0.82)]">
+            <div className="text-[clamp(0.82rem,0.95vw,1rem)] text-text-frost">
               {clock?.secondary.dateLabel || ""}
             </div>
           </div>
@@ -66,7 +66,7 @@ export function WeatherCard({ config, clock, weather, error }: WeatherCardProps)
                 {currentTemperature ?? "--"}
                 <span className="align-top text-[0.46em]">°</span>
               </div>
-              <div className="text-[clamp(0.88rem,0.96vw,1rem)] leading-[1.2] text-[rgba(226,232,240,0.82)]">
+              <div className="text-[clamp(0.88rem,0.96vw,1rem)] leading-[1.2] text-text-body">
                 Feels like {weather ? Math.round(weather.current.apparentTemperature) : "--"}°
               </div>
             </div>
@@ -80,7 +80,7 @@ export function WeatherCard({ config, clock, weather, error }: WeatherCardProps)
             <div className="text-[clamp(1.15rem,1.7vw,1.75rem)] leading-[1.05] font-medium">
               {weather?.current.weatherDescription || "Waiting for weather data"}
             </div>
-            <div className="text-[clamp(0.88rem,0.96vw,1rem)] leading-[1.2] text-[rgba(226,232,240,0.82)]">
+            <div className="text-[clamp(0.88rem,0.96vw,1rem)] leading-[1.2] text-text-body">
               {error
                 ? error
                 : weather
@@ -88,10 +88,10 @@ export function WeatherCard({ config, clock, weather, error }: WeatherCardProps)
                   : "Loading current conditions."}
             </div>
             <div className="flex flex-wrap gap-[0.65rem] text-[clamp(0.9rem,0.98vw,1rem)]">
-              <span className="text-[#ffb74d]">
+              <span className="text-temp-high">
                 High {weather ? Math.round(weather.daily[0]?.temperatureMax ?? weather.current.temperature) : "--"}°
               </span>
-              <span className="text-[#67b1ff]">
+              <span className="text-temp-low">
                 Low {weather ? Math.round(weather.daily[0]?.temperatureMin ?? weather.current.temperature) : "--"}°
               </span>
             </div>
