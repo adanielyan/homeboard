@@ -106,18 +106,18 @@
 
 @keyframes screen-saver {
   0%,
-  93% {
+  99.6667% {
     transform: translateX(-130%) skewX(-8deg) scaleY(1);
     opacity: 0;
   }
-  93.5% {
+  99.6905% {
     opacity: 1;
   }
-  96.5% {
+  99.8333% {
     transform: translateX(120%) skewX(-14deg) scaleY(1.06);
     opacity: 1;
   }
-  99.5% {
+  99.9762% {
     opacity: 1;
   }
   100% {
