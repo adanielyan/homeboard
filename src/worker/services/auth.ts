@@ -6,8 +6,8 @@ export function readBearerToken(request: Request): string | null {
     return null;
   }
 
-  const [scheme, token] = header.split(" ");
-  if (scheme?.toLowerCase() !== "bearer" || !token) {
+  const [scheme, token, ...extra] = header.trim().split(/\s+/);
+  if (scheme?.toLowerCase() !== "bearer" || !token || extra.length > 0) {
     return null;
   }
 
@@ -16,12 +16,26 @@ export function readBearerToken(request: Request): string | null {
 
 export function assertAuthorized(request: Request, env: Env): void {
   const token = readBearerToken(request);
+  const expectedToken = normalizeConfiguredToken(env.APP_AUTH_TOKEN);
 
   if (!token) {
     throw new HttpError(401, "unauthorized", "Missing bearer token.");
   }
 
-  if (token !== env.APP_AUTH_TOKEN) {
+  if (!expectedToken) {
+    throw new HttpError(500, "configuration_error", "APP_AUTH_TOKEN is not configured.");
+  }
+
+  if (token !== expectedToken) {
     throw new HttpError(401, "unauthorized", "Invalid bearer token.");
   }
+}
+
+function normalizeConfiguredToken(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed || null;
 }
